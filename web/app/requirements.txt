@@ -1,0 +1,5 @@
+flask
+gunicorn
+simple-websocket
+redis
+Flask-SocketIO

@@ -1,0 +1,115 @@
+{% include "header.html" %}
+
+    <div class="container-fluid font-monospace">
+
+        <div class="row mt-5"></div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <p class="fs-1 text-secondary fw-bold text-center">Fast Tuesday</p>
+            </div>
+        </div>
+
+        <div class="row mt-5"></div>
+
+        <div class="row justify-content-md-center mt-5">
+            {% if NA == '0' %}
+            <div class="col-8">
+                <div class="row m-2 fs-5">
+                    <div class="col-sm-2">
+                        <div class="text-center rounded-3 m-2 text-light INFO">
+                            Total CVEs
+                        </div>
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3 px-2">
+                        <div class="text-center rounded-3 m-2 text-light CRITICAL">
+                            Critical
+                        </div>                       
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3 px-2">
+                        <div class="text-center rounded-3 m-2 text-light HIGH">
+                            High
+                        </div>                      
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3 px-2">
+                        <div class="text-center rounded-3 m-2 text-light MEDIUM">
+                            Medium
+                        </div>                       
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3 px-2">
+                        <div class="text-center rounded-3 m-2 text-light LOW">
+                            Low
+                        </div>                       
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3 px-2">
+                        <div class="text-center rounded-3 m-2 text-light INFO">
+                            CVEs to analyze
+                        </div>                      
+                    </div>
+                </div>
+                <div class="row m-2 fs-5 font-monospace">
+                    <div class="col-sm-2 text-center rounded-3">
+                        {{ total_number }}
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3">
+                        {{ critical_number }}
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3">
+                        {{ high_number }}
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3">
+                        {{ medium_number }}
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3">
+                        {{ low_number }}
+                    </div>
+                    <div class="col-sm-2 text-center rounded-3">
+                        {{ to_analyze_number }}
+                    </div>
+                </div>
+            </div>
+            {% elif NA == '1' %}
+            <div class="col-8 fs-3 text-center">
+                NO PATCH TUESDAY TODAY
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="row mt-5"></div>
+        <div class="row mt-5"></div>
+
+        <div class="row mt-5 justify-content-md-center">
+            <div class=col-8>
+                <div class="row justify-content-md-center">
+                    <div class="col-6">
+                        <form action="/join" method="post">
+                            <div class="row">
+                                <div class="col-10 text-center">
+                                    <label class="form-label">Join or create a new analysis</label>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-10">
+                                <input type="text" class="form-control" name="user" placeholder="Analysis ID">
+                                </div>
+                                <div class="col-2">
+                                    {% if NA == '0' %}
+                                    <button type="submit" class="btn btn-primary">START</button>
+                                    {% elif NA == '1' %}
+                                    <button type="submit" class="btn btn-primary" disabled>START</button>
+                                    {% endif %}
+                                </div>
+                            </div>  
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row m-5">
+            
+        </div>
+        
+    </div>
+
+{% include "footer.html" %}

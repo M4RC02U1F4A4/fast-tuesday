@@ -1,0 +1,24 @@
+.CRITICAL {
+    background-color: #000000;
+    color: #000000 !important;
+}
+
+.HIGH {
+    background-color: #FF0000;
+    color: #FF0000 !important;
+}
+
+.MEDIUM {
+    background-color: #FF701E;
+    color: #FF701E !important;
+}
+
+.LOW {
+    background-color: #FFC81E;
+    color: #FF701E !important;
+}
+
+.INFO {
+    background-color: #0d6efd;
+    color: #0d6efd !important;
+}

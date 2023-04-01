@@ -1,0 +1,343 @@
+{% include "header.html" %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script>
+    var socket = io();
+    socket.on('connect', function() {
+    socket.emit('join_room', {'room':'{{ user_id }}'});
+    });
+
+    socket.on("room_message", (msg) => {
+        console.log("%j", msg);
+        if(msg.action == 1){
+            document.getElementById('b1'+msg.cve).innerHTML = "<button type=\"button\" class=\"btn btn-danger\" value=\"" + msg.cve + "\" onclick=\"remove(this.value)\">REMOVE</button>"
+            document.getElementById(msg.cve).className = "row m-2 p-2 border border-success rounded-3 bg-success text-white";
+            document.getElementById('b2'+msg.cve).innerHTML = "<button type=\"button\" class=\"btn btn-primary\" value=\"" + msg.cve + "\" onclick=\"reset(this.value)\">RESET</button>"
+            document.getElementById('bi'+msg.cve).className = document.getElementById('bi'+msg.cve).className.replace('-outline-', '-');
+        }
+        else if(msg.action == 0){
+            document.getElementById('b1'+msg.cve).innerHTML = "<button type=\"button\" class=\"btn btn-success\" value=\"" + msg.cve + "\" onclick=\"add(this.value)\">ADD</button>"
+            document.getElementById(msg.cve).className = "row m-2 p-2 border border-danger rounded-3 bg-danger text-white";
+            document.getElementById('b2'+msg.cve).innerHTML = "<button type=\"button\" class=\"btn btn-primary\" value=\"" + msg.cve + "\" onclick=\"reset(this.value)\">RESET</button>"
+            document.getElementById('bi'+msg.cve).className = document.getElementById('bi'+msg.cve).className.replace('-outline-', '-');
+        }
+        else if(msg.action == -1){
+            document.getElementById('b1'+msg.cve).innerHTML = "<button type=\"button\" class=\"btn btn-outline-success\" value=\"" + msg.cve + "\" onclick=\"add(this.value)\">ADD</button>"
+            document.getElementById('b2'+msg.cve).innerHTML = "<button type=\"button\" class=\"btn btn-outline-danger\" value=\"" + msg.cve + "\" onclick=\"remove(this.value)\">REMOVE</button>"
+            document.getElementById(msg.cve).className = "row m-2 p-2 border border-primary rounded-3";
+            document.getElementById('bi'+msg.cve).className = document.getElementById('bi'+msg.cve).className.replace('btn-primary', 'btn-outline-primary');
+        }
+        
+    });
+
+    function add(cve) {
+        socket.emit('send_message', {'room':'{{ user_id }}', 'cve':cve, 'action':1});
+    }
+    function remove(cve) {
+        socket.emit('send_message', {'room':'{{ user_id }}', 'cve':cve, 'action':0});
+    }
+    function reset(cve) {
+        socket.emit('send_message', {'room':'{{ user_id }}', 'cve':cve, 'action':-1});
+    }
+
+</script>
+
+<div class="container-fluid">
+    <div class="row mt-2 border-bottom">
+        <div class="col-sm-12">
+            <p class="text-center fs-2 text-primary fw-bold">FAST TUESDAY - {{ cve_list|count }}</p>
+            <p class="text-center text-secondary font-monospace">{{ user_id }}</p>
+        </div>
+    </div>
+    {% for cve in cve_list %}
+        {% if cve['CVE'] in user_cve and user_cve[cve['CVE']] == 1 %}
+            <div class="row m-2 p-2 border border-success rounded-3 bg-success text-white" id="{{ cve['CVE'] }}">
+        {% elif cve['CVE'] in user_cve and user_cve[cve['CVE']] == 0 %}
+            <div class="row m-2 p-2 border border-danger rounded-3 bg-danger text-white" id="{{ cve['CVE'] }}">
+        {% else %}
+            <div class="row m-2 p-2 border border-primary rounded-3" id="{{ cve['CVE'] }}">
+        {% endif %}
+            <div class="col-4 text-center">
+                <div class="fw-bolder text-white">{{ cve['CVE'] }} - {{ cve['CVSSScoreSets'][0]['BaseScore'] }}</div>
+                <div class="font-monospace">{{ cve['CVSSScoreSets'][0]['Vector'] }}</div>
+            </div>
+            <div class="col-4 align-self-center">{{ cve['Title']['Value'] }}</div>
+            <div class="col-1 text-center align-self-center">{{ cve['RevisionHistory'][-1]['Date']|datetimeformat }}</div>
+            <div class="col-1 text-center d-grid gap-2" id="b1{{ cve['CVE'] }}">
+                {% if cve['CVE'] in user_cve and user_cve[cve['CVE']] == 1 %}
+                    <button type="button" class="btn btn-danger" value="{{ cve['CVE'] }}" onclick="remove(this.value)">REMOVE</button>
+                {% elif cve['CVE'] in user_cve and user_cve[cve['CVE']] == 0 %}
+                    <button type="button" class="btn btn-success" value="{{ cve['CVE'] }}" onclick="add(this.value)">ADD</button>
+                {% else %}
+                    <button type="button" class="btn btn-outline-success" value="{{ cve['CVE'] }}" onclick="add(this.value)">ADD</button>
+                {% endif %}
+            </div>
+            <div class="col-1 text-center d-grid gap-2" id="b2{{ cve['CVE'] }}">
+                {% if cve['CVE'] in user_cve and (user_cve[cve['CVE']] == 0 or user_cve[cve['CVE']] == 1) %}
+                    <button type="button" class="btn btn-primary" value="{{ cve['CVE'] }}" onclick="reset(this.value)">RESET</button>
+                {% else %}
+                    <button type="button" class="btn btn-outline-danger" value="{{ cve['CVE'] }}" onclick="remove(this.value)">REMOVE</button>
+                {% endif %}
+            </div>
+            <div class="col-1 text-center d-grid gap-2">
+                {% if cve['CVE'] in user_cve and user_cve[cve['CVE']] != -1 %}
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" id="bi{{ cve['CVE'] }}" data-bs-target="#info{{ cve['CVE'] }}">INFO</button>
+                {% else %}
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" id="bi{{ cve['CVE'] }}" data-bs-target="#info{{ cve['CVE'] }}">INFO</button>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    {% for cve in cve_list %}
+    <div class="modal fade" id="info{{ cve['CVE'] }}" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5 fw-bolder">{{ cve['CVE'] }}</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Title -->
+                <div class="row mt-2 text-center fs-5 fw-bolder">
+                    <div class="col-12">
+                        DESCRIPTION
+                    </div>
+                </div>
+                <div class="row mt-2 justify-content-md-center">
+                    <div class="col-10 alert alert-dark">
+                        <p>{{ cve['Title']['Value'] }}</p>
+                    </div> 
+                </div>
+                <div class="row mt-4">
+                    <div class="col-4 text-center fs-5 fw-bolder">
+                        INFO
+                    </div>
+                    <div class="col-4 text-center fs-5 fw-bolder">
+                        BASE SCORE
+                    </div>
+                    <div class="col-4 text-center fs-5 fw-bolder">
+                        TEMPORAL SCORE
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-4">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">ID</th>
+                                    <td>{{ cve['CVE'] }}</td>
+                                </tr>                  
+                                <tr>
+                                    <th scope="row">Base Score</th>
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScore'] }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Temporal Score</th>
+                                    <td>{{ cve['CVSSScoreSets'][0]['TemporalScore'] }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Released</th>
+                                    <td>{{ cve['RevisionHistory'][0]['Date']|datetimeformat }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Last update</th>
+                                    <td>{{ cve['RevisionHistory'][-1]['Date']|datetimeformat }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Exploited</th>
+                                    {% if cve['Threats'][-1]['Description']['Value'].split(';')[1].replace('Exploited:', '') == 'Yes' %}
+                                    <td class="text-danger">{{ cve['Threats'][-1]['Description']['Value'].split(';')[1].replace('Exploited:', '') }}</td>
+                                    {% else %}
+                                    <td>{{ cve['Threats'][-1]['Description']['Value'].split(';')[1].replace('Exploited:', '') }}</td>
+                                    {% endif %}
+                                </tr>
+                                <tr>
+                                    <th scope="row">Exploit publicy disclosed</th>
+                                    {% if cve['Threats'][-1]['Description']['Value'].split(';')[0].replace('Publicly Disclosed:', '') == 'Yes' %}
+                                    <td class="text-danger">{{ cve['Threats'][-1]['Description']['Value'].split(';')[0].replace('Publicly Disclosed:', '') }}</td>
+                                    {% else %}
+                                    <td>{{ cve['Threats'][-1]['Description']['Value'].split(';')[0].replace('Publicly Disclosed:', '') }}</td>
+                                    {% endif %}
+                                </tr>
+                              </tbody>
+                          </table>
+                    </div>
+                    <div class="col-4">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" title="This metric reflects the context by which vulnerability exploitation is possible. The Base Score increases the more remote (logically, and physically) an attacker can be in order to exploit the vulnerable component.">Attack Vector</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Vector'] == 'Network' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Vector'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Vector'] }}</td>
+                                    {% endif %}
+                                </tr>   
+                                <tr>
+                                    <th scope="row" title="This metric describes the conditions beyond the attacker’s control that must exist in order to exploit the vulnerability. Such conditions may require the collection of more information about the target, the presence of certain system configuration settings, or computational exceptions.">Attack Complexity</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Complexity'] == 'Low' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Complexity'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Complexity'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="This metric describes the level of privileges an attacker must possess before successfully exploiting the vulnerability. This Base Score increases as fewer privileges are required.">Privileges Required</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Privileges Required'] == 'None' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Privileges Required'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Privileges Required'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="This metric captures the requirement for a user, other than the attacker, to participate in the successful compromise the vulnerable component. This metric determines whether the vulnerability can be exploited solely at the will of the attacker, or whether a separate user (or user-initiated process) must participate in some manner. The Base Score is highest when no user interaction is required.">User Interaction</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['User Interaction'] == 'None' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['User Interaction'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['User Interaction'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="Does a successful attack impact a component other than the vulnerable component? If so, the Base Score increases and the Confidentiality, Integrity and Authentication metrics should be scored relative to the impacted component.">Scope</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Scope'] == 'Changed' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Scope'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Scope'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="This metric measures the impact to the confidentiality of the information resources managed by a software component due to a successfully exploited vulnerability. Confidentiality refers to limiting information access and disclosure to only authorized users, as well as preventing access by, or disclosure to, unauthorized ones.">Confidentiality</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Confidentiality'] == 'High' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Confidentiality'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Confidentiality'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="This metric measures the impact to integrity of a successfully exploited vulnerability. Integrity refers to the trustworthiness and veracity of information.">Integrity</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Integrity'] == 'High' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Integrity'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Integrity'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="This metric measures the impact to the availability of the impacted component resulting from a successfully exploited vulnerability. It refers to the loss of availability of the impacted component itself, such as a networked service (e.g., web, database, email). Since availability refers to the accessibility of information resources, attacks that consume network bandwidth, processor cycles, or disk space all impact the availability of an impacted component.">Availability</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Availability'] == 'High' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Availability'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Availability'] }}</td>
+                                    {% endif %}
+                                </tr>                    
+                              </tbody>
+                        </table>
+                    </div>
+                    <div class="col-4">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" title="This metric measures the likelihood of the vulnerability being attacked, and is typically based on the current state of exploit techniques, exploit code availability, or active, 'in-the-wild' exploitation.">Exploit Code Maturity</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Exploit Code Maturity'] != 'Unproven' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Exploit Code Maturity'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Exploit Code Maturity'] }}</td>
+                                    {% endif %}
+                                </tr>   
+                                <tr>
+                                    <th scope="row" title="The Remediation Level of a vulnerability is an important factor for prioritization. The typical vulnerability is unpatched when initially published. Workarounds or hotfixes may offer interim remediation until an official patch or upgrade is issued. Each of these respective stages adjusts the temporal score downwards, reflecting the decreasing urgency as remediation becomes final.">Remediation Level</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Remediation Level'] == 'Official Fix' %}
+                                    <td class="text-success">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Remediation Level'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Remediation Level'] }}</td>
+                                    {% endif %}
+                                </tr>     
+                                <tr>
+                                    <th scope="row" title="This metric measures the degree of confidence in the existence of the vulnerability and the credibility of the known technical details. Sometimes only the existence of vulnerabilities are publicized, but without specific details. For example, an impact may be recognized as undesirable, but the root cause may not be known. The vulnerability may later be corroborated by research which suggests where the vulnerability may lie, though the research may not be certain. Finally, a vulnerability may be confirmed through acknowledgement by the author or vendor of the affected technology. The urgency of a vulnerability is higher when a vulnerability is known to exist with certainty. This metric also suggests the level of technical knowledge available to would-be attackers.">Report Confidence</th>
+                                    {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Report Confidence'] == 'Confirmed' %}
+                                    <td class="text-danger">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Report Confidence'] }}</td>
+                                    {% else %}
+                                    <td>{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Report Confidence'] }}</td>
+                                    {% endif %}
+                                </tr>                    
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-2 justify-content-center">
+                    <div class="col-6">
+                        <input class="form-control text-center font-monospace" type="text" value="{{ cve['CVSSScoreSets'][0]['Vector'] }}" disabled readonly>
+                    </div>
+                </div>
+                <!-- faq -->
+                <div class="row mt-2">
+                    <p class="fw-bolder fs-4 pr-3  text-center">FAQ</p>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq{{ cve['CVE'] }}">View</button>
+                    {% for note in cve['Notes'] %}
+                        {% if note['Title'] == 'FAQ' %}
+                        <div class="collapse" id="faq{{ cve['CVE'] }}">
+                            {{note['Value'].replace('<p><strong>', '<p class="fs-6 fw-bolder">').replace('</strong></p>', '')|safe}}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <!-- patch -->
+                <div class="row mt-4">
+                    <p class="fw-bolder fs-4 pr-3 text-center">AFFECTED PRODUCTS</p>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#patch{{ cve['CVE'] }}">View</button>
+                    <div class="collapse" id="patch{{ cve['CVE'] }}" style="font-size: small">
+                        <table class="table">
+                            <thead>
+                                <tr class="d-flex">
+                                  <th scope="col" class="col-8">Product</th>
+                                  <th scope="col" class="col-2 text-center">Impact</th>
+                                  <th scope="col" class="col-2 text-center">Max Severity</th>
+                                </tr>
+                              </thead>                            
+                            <tbody>
+                                {% for item in cve['ProductStatuses'][0]['ProductID']%}
+                                <tr class="d-flex">
+                                    <th scope="row" class="col-8">{{ item_list[item] }}</th>
+                                    {% for th in cve['Threats'] %}
+                                        {% if item in th['ProductID'] %}
+                                            <td class="col-2 text-center">{{ th['Description']['Value'] }}</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tr>    
+                                {% endfor %}                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- revision history -->
+                <div class="row mt-4">
+                    <p class="fw-bolder fs-4 pr-3 text-center">REVISION</p>
+                    <table class="table table-borderless">
+                        <tbody>
+                            {% for r in cve['RevisionHistory']%}
+                            <tr class="d-flex">
+                                <th class="col-1" scope="row">{{ r['Number'] }}</th>
+                                <td class="col-2">{{ r['Date']|datetimeformat }}</td>
+                                <td class="col-9">{{ r['Description']['Value']|safe }}</td>
+                            </tr>   
+                            {% endfor %}               
+                          </tbody>
+                      </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="https://msrc.microsoft.com/update-guide/vulnerability/{{ cve['CVE'] }}" class="btn btn-outline-primary" target="_blank" role="button">Microsoft</a>
+                <button type="button" class="btn btn-outline-success" data-bs-dismiss="modal" value="{{ cve['CVE'] }}" onclick="add(this.value)">ADD</button>
+                <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal" value="{{ cve['CVE'] }}" onclick="remove(this.value)">REMOVE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+</div>
+
+<div class="d-grid col-4 mx-auto m-4">
+    <a href="/export" class="btn btn-outline-primary" role="button">EXPORT</a>
+</div>
+
+{% include "footer.html" %}

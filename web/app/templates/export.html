@@ -1,0 +1,104 @@
+{% include "header.html" %}
+
+<div class="container-fluid">
+    <div class="row mt-2">
+        <div class="col-sm-12">
+            <p class="text-center fs-2 text-primary fw-bold">FAST TUESDAY </p>
+            <p class="text-center text-secondary font-monospace">{{ user_id }}</p>
+        </div>
+    </div>
+    <div class="row justify-content-md-center mt-2 border-bottom border-top">
+        <div class="col-8">
+            <div class="row m-2 fs-5 justify-content-md-center">
+                <div class="col-sm-2">
+                    <div class="text-center rounded-3 m-2 p-1 text-light bg-success">
+                        {{ accepted }}
+                    </div>
+                </div>
+                <div class="col-sm-2">
+                    <div class="text-center rounded-3 m-2  p-1 text-light bg-danger">
+                        {{ rejected }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th scope="col" class="text-center fs-5">CVE</th>
+                <th scope="col" class="text-center fs-5">Product</th>
+                <th scope="col" class="text-center fs-5">Description</th>
+                <th scope="col" class="text-center fs-5">CVSS</th>
+                <th scope="col" class="text-center fs-5">Vector</th>
+                <th scope="col" class="text-center fs-5">User Interaction</th>
+                <th scope="col" class="text-center fs-5">Complexity</th>
+                <th scope="col" class="text-center fs-5">Privileges</th>
+                <th scope="col" class="text-center fs-5">Exploit Maturity</th>
+                <th scope="col" class="text-center fs-5">Remediation</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for cve in cve_list_final %}
+                    <tr>
+                        <th scope="row" class="text-center"><a href="https://msrc.microsoft.com/update-guide/vulnerability/{{ cve['CVE'] }}">{{ cve['CVE'] }}</a></th>
+                        <td class="text-center">{{ cve['Notes'][-2]['Title'] }}</td>
+                        <td class="text-center">{{ cve['Threats'][0]['Description']['Value'] }}</td>
+                        
+                        {% if cve['CVSSScoreSets'][0]['BaseScore'] >= 4.0 and cve['CVSSScoreSets'][0]['BaseScore'] <= 6.9 %}
+                        <td class="text-center MEDIUM fw-bold">{{ cve['CVSSScoreSets'][0]['BaseScore'] }}</td>
+                        {% elif cve['CVSSScoreSets'][0]['BaseScore'] >= 7.0 and cve['CVSSScoreSets'][0]['BaseScore'] <= 8.9 %}
+                        <td class="text-center HIGH fw-bold">{{ cve['CVSSScoreSets'][0]['BaseScore'] }}</td>
+                        {% elif cve['CVSSScoreSets'][0]['BaseScore'] >= 8.9 and cve['CVSSScoreSets'][0]['BaseScore'] <= 10.0 %}
+                        <td class="text-center CRITICAL fw-bold">{{ cve['CVSSScoreSets'][0]['BaseScore'] }}</td>
+                        {% endif %}
+                        
+
+                        {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Vector'] == 'Network' %}
+                        <td class="text-danger text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Vector'] }}</td>
+                        {% else %}
+                        <td class="text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Vector'] }}</td>
+                        {% endif %}
+
+                        {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['User Interaction'] == 'None' %}
+                        <td class="text-danger text-center"">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['User Interaction'] }}</td>
+                        {% else %}
+                        <td class="text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['User Interaction'] }}</td>
+                        {% endif %}
+                    
+                        {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Complexity'] == 'Low' %}
+                        <td class="text-danger text-center"">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Complexity'] }}</td>
+                        {% else %}
+                        <td class="text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Attack Complexity'] }}</td>
+                        {% endif %}
+                        
+                        {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Privileges Required'] == 'None' %}
+                        <td class="text-danger text-center"">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Privileges Required'] }}</td>
+                        {% else %}
+                        <td class="text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Privileges Required'] }}</td>
+                        {% endif %}
+                        
+                        {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Exploit Code Maturity'] != 'Unproven' %}
+                        <td class="text-danger text-center"">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Exploit Code Maturity'] }}</td>
+                        {% else %}
+                        <td class="text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Exploit Code Maturity'] }}</td>
+                        {% endif %}
+                        
+                        {% if cve['CVSSScoreSets'][0]['BaseScoreFULL']['Remediation Level'] == 'Official Fix' %}
+                        <td class="text-success text-center"">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Remediation Level'] }}</td>
+                        {% else %}
+                        <td class="text-center">{{ cve['CVSSScoreSets'][0]['BaseScoreFULL']['Remediation Level'] }}</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="d-grid col-4 mx-auto m-4">
+    <a href="/fast" class="btn btn-outline-primary" role="button">BACK</a>
+</div>
+
+{% include "footer.html" %}

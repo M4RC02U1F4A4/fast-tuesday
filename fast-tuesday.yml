@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fast-tuesday-web
+  namespace: prod
+spec:
+  ports:
+    - port: 5555
+      targetPort: 5555
+  selector:
+    app: fast-tuesday-web
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: fast-tuesday-db
+  namespace: prod
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: fast-tuesday-db
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fast-tuesday-db
+  namespace: prod
+spec:
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: fast-tuesday-db
+  replicas: 1
+  template:
+    metadata:
+      name: fast-tuesday-db-pod
+      labels:
+        app: fast-tuesday-db
+    spec:
+      containers:
+        - name: fast-tuesday-db-container
+          image: redis/redis-stack
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fast-tuesday-web
+  namespace: prod
+spec:
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: fast-tuesday-web
+  replicas: 1
+  template:
+    metadata:
+      name: fast-tuesday-web-pod
+      labels:
+        app: fast-tuesday-web
+    spec:
+      containers:
+        - name: fast-tuesday-web-container
+          image: fast-tuesday/web:latest
+          env:
+          - name: REDIS_HOST
+            value: "fast-tuesday-db"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fast-tuesday-updater
+  namespace: prod
+spec:
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: fast-tuesday-updater
+  replicas: 1
+  template:
+    metadata:
+      name: fast-tuesday-updater-pod
+      labels:
+        app: fast-tuesday-updater
+    spec:
+      containers:
+        - name: fast-tuesday-updater-container
+          image: fast-tuesday/updater:latest
+          env:
+          - name: REDIS_HOST
+            value: "fast-tuesday-db"
