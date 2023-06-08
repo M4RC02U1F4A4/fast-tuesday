@@ -5,6 +5,9 @@ import random
 import hashlib
 import redis
 import os
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 redis_host = str(os.getenv('REDIS_HOST'))
 
@@ -13,10 +16,13 @@ r_item = redis.Redis(host = redis_host, port = 6379, db = 1, decode_responses = 
 r_user = redis.Redis(host = redis_host, port = 6379, db = 2, decode_responses = True)
 r_stats = redis.Redis(host = redis_host, port = 6379, db = 3, decode_responses = True)
 
-print(f"Connected to r_cve {r_cve.ping()}")
-print(f"Connected to r_item {r_item.ping()}")
-print(f"Connected to r_user {r_user.ping()}")
-print(f"Connected to r_stats {r_stats.ping()}")
+try:
+    logging.debug(f"Connected to r_cve {r_cve.ping()}")
+    logging.debug(f"Connected to r_item {r_item.ping()}")
+    logging.debug(f"Connected to r_user {r_user.ping()}")
+    logging.debug(f"Connected to r_stats {r_stats.ping()}")
+except:
+    logging.critical("Redis connection failed!")
 
 async_mode = None
 app = Flask(__name__)

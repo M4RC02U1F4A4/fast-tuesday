@@ -2,8 +2,10 @@ import requests
 from datetime import datetime
 import redis
 from cvss import CVSS3
-from apscheduler.schedulers.blocking import BlockingScheduler
 import os
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 redis_host = str(os.getenv('REDIS_HOST'))
 
@@ -32,13 +34,23 @@ def extract_cvss_full(vector):
     }
 
 def update():
-    r_vuln = redis.Redis(host = redis_host, port = 6379, db = 0)
+    r_cve = redis.Redis(host = redis_host, port = 6379, db = 0)
+    r_item = redis.Redis(host = redis_host, port = 6379, db = 1)
     r_stats = redis.Redis(host = redis_host, port = 6379, db = 3, decode_responses = True)
 
+    try:
+        logging.debug(f"Connected to r_cve {r_cve.ping()}")
+        logging.debug(f"Connected to r_item {r_item.ping()}")
+        logging.debug(f"Connected to r_stats {r_stats.ping()}")
+    except:
+        logging.critical("Redis connection failed!")
+        exit()
+
     month = f"{datetime.now().year}-{datetime.now().strftime('%b')}"
-    print(f"Update {datetime.now()}")
+    logging.info(f"Update started")
     r = requests.get(f"https://api.msrc.microsoft.com/cvrf/{month}", headers={"Accept":"application/json"})
     if r.status_code == 404:
+        logging.warning('Too early for patch tuesday')
         r_stats.set("NA", 1, 21600)
     else:
         r_stats.set("NA", 0, 21600)
@@ -66,8 +78,8 @@ def update():
                     i['RevisionHistory'] = sorted(i['RevisionHistory'], key=lambda d: d['Date']) 
                     i['CVSSScoreSets'] = extract_max_score(i['CVSSScoreSets'])
                     i['CVSSScoreSets'][0]['BaseScoreFULL'] = extract_cvss_full(i['CVSSScoreSets'][0]['Vector'])
-                    r_vuln.json().set(f"{month}:{i['CVE']}", "$", i)
-                    r_vuln.expire(f"{month}:{i['CVE']}", 21600)
+                    r_cve.json().set(f"{month}:{i['CVE']}", "$", i)
+                    r_cve.expire(f"{month}:{i['CVE']}", 21600)
                     to_analyze_number += 1
 
         r_stats.set("total_number", total_number, 21600)
@@ -83,11 +95,16 @@ def update():
         r_stats.expire("low_number", 21600)
         r_stats.expire("to_analyze_number", 21600)
 
-
-        r_item = redis.Redis(host = redis_host, port = 6379, db = 1)
+        logging.debug(f"total_number -> {total_number}")
+        logging.debug(f"critical_number -> {critical_number}")
+        logging.debug(f"high_number -> {high_number}")
+        logging.debug(f"medium_number -> {medium_number}")
+        logging.debug(f"low_number -> {low_number}")
+        logging.debug(f"to_analyze_number -> {to_analyze_number}")      
 
         for item in jsonResponseMicrosoft['ProductTree']['FullProductName']:
             r_item.set(f"{item['ProductID']}", item['Value'])
             r_item.expire(f"{item['ProductID']}", 21600)
+    logging.info(f"Update complete")
 
 update()
