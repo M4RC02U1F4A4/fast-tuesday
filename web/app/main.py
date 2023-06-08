@@ -78,6 +78,14 @@ def export():
             cve_list_final.append(cve)
     return render_template("export.html", cve_list_final = sorted(cve_list_final, key=lambda d: d['CVSSScoreSets'][0]['BaseScore'], reverse=True), accepted = len(cve_list_final), rejected = len(cve_list) - len(cve_list_final), user_id = user)
 
+@app.route('/status')
+def status():
+    try:
+        r_cve.ping()
+        return "OK", 200
+    except:
+        return "ERROR", 500
+
 def get_cve():
     month = f"{datetime.now().year}-{datetime.now().strftime('%b')}"
     cve_list_name = r_cve.keys(f"{month}:*")

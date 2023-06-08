@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+
+  web:
+    build: 
+      context: web
+    restart: always
+    environment:
+      REDIS_HOST: db
+      PYTHONUNBUFFERED: 1
+    ports:
+      - 5555:5555
+    depends_on:
+      - db
+
+  db:
+    image: redis/redis-stack
+    restart: always
