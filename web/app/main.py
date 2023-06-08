@@ -5,7 +5,6 @@ import random
 import hashlib
 import redis
 import os
-import time
 
 redis_host = str(os.getenv('REDIS_HOST'))
 

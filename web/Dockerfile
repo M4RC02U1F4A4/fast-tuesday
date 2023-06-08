@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.9.7-slim
 RUN mkdir app
 COPY app /app
 WORKDIR /app
