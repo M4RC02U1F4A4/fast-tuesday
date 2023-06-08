@@ -24,6 +24,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = hashlib.sha256(f"{random.randint(0, 999999)}".encode()).hexdigest()
 socketio = SocketIO(app)
 
+# FLASK ROUTES
+
 @app.route('/')
 def home():
     resp = make_response(render_template('home.html', NA = r_stats.get("NA"), total_number = r_stats.get("total_number"), critical_number = r_stats.get("critical_number"), high_number = r_stats.get("high_number"), medium_number = r_stats.get("medium_number"), low_number = r_stats.get("low_number"), to_analyze_number =  r_stats.get("to_analyze_number")))
@@ -85,6 +87,8 @@ def status():
         return "OK", 200
     except:
         return "ERROR", 500
+
+# OTHER FUNCTIONS
 
 def get_cve():
     month = f"{datetime.now().year}-{datetime.now().strftime('%b')}"

@@ -91,6 +91,3 @@ def update():
             r_item.expire(f"{item['ProductID']}", 21600)
 
 update()
-scheduler = BlockingScheduler()
-scheduler.add_job(update, 'interval', minutes=300)
-scheduler.start()

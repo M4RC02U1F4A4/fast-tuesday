@@ -4,13 +4,23 @@ services:
 
   web:
     build: 
-      context: web
+      context: web/
     restart: always
     environment:
       REDIS_HOST: db
       PYTHONUNBUFFERED: 1
     ports:
       - 5555:5555
+    depends_on:
+      - db
+
+  update:
+    build: 
+      context: updater/
+    restart: always
+    environment:
+      REDIS_HOST: db
+      PYTHONUNBUFFERED: 1
     depends_on:
       - db
 
