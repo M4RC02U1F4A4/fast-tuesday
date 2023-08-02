@@ -93,7 +93,7 @@
         <div class="modal-dialog modal-xl">
           <div class="modal-content">
             <div class="modal-header">
-              <h1 class="modal-title fs-5 fw-bolder">{{ cve['CVE'] }}</h1>
+              <h1 class="modal-title fs-5 fw-bolder">{{ cve['CVE'] }}  - {{ cve['CVSSScoreSets'][0]['BaseScore'] }}</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -271,10 +271,9 @@
                 <!-- faq -->
                 <div class="row mt-2">
                     <p class="fw-bolder fs-4 pr-3  text-center">FAQ</p>
-                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faq{{ cve['CVE'] }}">View</button>
                     {% for note in cve['Notes'] %}
                         {% if note['Title'] == 'FAQ' %}
-                        <div class="collapse" id="faq{{ cve['CVE'] }}">
+                        <div id="faq{{ cve['CVE'] }}">
                             {{note['Value'].replace('<p><strong>', '<p class="fs-6 fw-bolder">').replace('</strong></p>', '')|safe}}
                         </div>
                         {% endif %}
