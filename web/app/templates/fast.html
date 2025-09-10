@@ -145,18 +145,40 @@
                                 </tr>
                                 <tr>
                                     <th scope="row">Exploited</th>
-                                    {% if cve['Threats'][-1]['Description']['Value'].split(';')[1].replace('Exploited:', '') == 'Yes' %}
-                                    <td class="text-danger">{{ cve['Threats'][-1]['Description']['Value'].split(';')[1].replace('Exploited:', '') }}</td>
+                                    {% set threats = cve.get('Threats', []) %}
+                                    {% if threats and threats[-1].get('Description') and threats[-1]['Description'].get('Value') %}
+                                        {% set parts = threats[-1]['Description']['Value'].split(';') %}
+                                        {% if parts|length > 1 %}
+                                            {% set exploited = parts[1].replace('Exploited:', '').strip() %}
+                                            {% if exploited == 'Yes' %}
+                                                <td class="text-danger">{{ exploited }}</td>
+                                            {% else %}
+                                                <td>{{ exploited }}</td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td>Not Defined</td>
+                                        {% endif %}
                                     {% else %}
-                                    <td>{{ cve['Threats'][-1]['Description']['Value'].split(';')[1].replace('Exploited:', '') }}</td>
+                                        <td>Not Defined</td>
                                     {% endif %}
                                 </tr>
                                 <tr>
-                                    <th scope="row">Exploit publicy disclosed</th>
-                                    {% if cve['Threats'][-1]['Description']['Value'].split(';')[0].replace('Publicly Disclosed:', '') == 'Yes' %}
-                                    <td class="text-danger">{{ cve['Threats'][-1]['Description']['Value'].split(';')[0].replace('Publicly Disclosed:', '') }}</td>
+                                    <th scope="row">Exploit publicly disclosed</th>
+                                    {% set threats = cve.get('Threats', []) %}
+                                    {% if threats and threats[-1].get('Description') and threats[-1]['Description'].get('Value') %}
+                                        {% set parts = threats[-1]['Description']['Value'].split(';') %}
+                                        {% if parts|length > 0 %}
+                                            {% set disclosed = parts[0].replace('Publicly Disclosed:', '').strip() %}
+                                            {% if disclosed == 'Yes' %}
+                                                <td class="text-danger">{{ disclosed }}</td>
+                                            {% else %}
+                                                <td>{{ disclosed }}</td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td>Not Defined</td>
+                                        {% endif %}
                                     {% else %}
-                                    <td>{{ cve['Threats'][-1]['Description']['Value'].split(';')[0].replace('Publicly Disclosed:', '') }}</td>
+                                        <td>Not Defined</td>
                                     {% endif %}
                                 </tr>
                               </tbody>
