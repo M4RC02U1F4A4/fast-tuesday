@@ -2,5 +2,5 @@ flask
 simple-websocket
 redis
 Flask-SocketIO
-gunicorn
+gunicorn>=23.0.0
 eventlet==0.35.2
